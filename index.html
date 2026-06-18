@@ -77,17 +77,17 @@ const BODY_H = COUNTER_H - CASTER_H - TOP_THK; // wrapped body incl. toekick zon
 const TOEKICK_INSET = 2.5;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0c0f14);
+scene.background = new THREE.Color(0x1c2230);
 
-// ---------- materials ----------
-const matBlackWrap = new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.45, metalness: 0.2 });
-const matToekick   = new THREE.MeshStandardMaterial({ color: 0x0a0b0d, roughness: 0.6, metalness: 0.35 });
-const matCounter   = new THREE.MeshStandardMaterial({ color: 0x1b1d22, roughness: 0.25, metalness: 0.15 });
-const matSteel     = new THREE.MeshStandardMaterial({ color: 0xb8bcc4, roughness: 0.3, metalness: 0.9 });
-const matCaster    = new THREE.MeshStandardMaterial({ color: 0x2a2d33, roughness: 0.5, metalness: 0.6 });
-const matScreen    = new THREE.MeshStandardMaterial({ color: 0x05070a, roughness: 0.15, metalness: 0.1, emissive: 0x0a1626, emissiveIntensity: 0.6 });
-const matShelf     = new THREE.MeshStandardMaterial({ color: 0x16181c, roughness: 0.55, metalness: 0.2 });
-const matGrommet   = new THREE.MeshStandardMaterial({ color: 0x303338, roughness: 0.4, metalness: 0.7 });
+// ---------- materials (charcoal, not pure black, so form reads under light) ----------
+const matBlackWrap = new THREE.MeshStandardMaterial({ color: 0x33373d, roughness: 0.5,  metalness: 0.15 });
+const matToekick   = new THREE.MeshStandardMaterial({ color: 0x202327, roughness: 0.65, metalness: 0.3  });
+const matCounter   = new THREE.MeshStandardMaterial({ color: 0x3a3e44, roughness: 0.3,  metalness: 0.1  });
+const matSteel     = new THREE.MeshStandardMaterial({ color: 0xc8ccd4, roughness: 0.28, metalness: 0.9  });
+const matCaster    = new THREE.MeshStandardMaterial({ color: 0x44484f, roughness: 0.5,  metalness: 0.6  });
+const matScreen    = new THREE.MeshStandardMaterial({ color: 0x0a1320, roughness: 0.15, metalness: 0.1, emissive: 0x16335c, emissiveIntensity: 0.9 });
+const matShelf     = new THREE.MeshStandardMaterial({ color: 0x2c3036, roughness: 0.55, metalness: 0.2  });
+const matGrommet   = new THREE.MeshStandardMaterial({ color: 0x5a5e66, roughness: 0.4,  metalness: 0.7  });
 
 function box(w,h,d,mat){ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.castShadow=true; m.receiveShadow=true; return m; }
 
@@ -176,27 +176,30 @@ cart.position.y = 0;
 scene.add(cart);
 
 // ---------- ground ----------
-const ground = new THREE.Mesh(new THREE.CircleGeometry(180, 64), new THREE.MeshStandardMaterial({color:0x0e1117, roughness:1, metalness:0}));
+const ground = new THREE.Mesh(new THREE.CircleGeometry(180, 64), new THREE.MeshStandardMaterial({color:0x2a313d, roughness:1, metalness:0}));
 ground.rotation.x = -Math.PI/2; ground.position.y = -0.05; ground.receiveShadow = true;
 scene.add(ground);
-const grid = new THREE.GridHelper(360, 36, 0x223044, 0x161b24); grid.position.y = 0; scene.add(grid);
+const grid = new THREE.GridHelper(360, 36, 0x4a5a6e, 0x33414f); grid.position.y = 0; scene.add(grid);
 
 // ---------- lights ----------
-scene.add(new THREE.HemisphereLight(0x9fb4d0, 0x10131a, 0.55));
-const key = new THREE.DirectionalLight(0xffffff, 1.8); key.position.set(60, 90, 70);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+scene.add(new THREE.HemisphereLight(0xdce6f5, 0x2a2f38, 1.1));
+const key = new THREE.DirectionalLight(0xffffff, 3.2); key.position.set(60, 100, 80);
 key.castShadow = true; key.shadow.mapSize.set(2048,2048);
 key.shadow.camera.near=10; key.shadow.camera.far=400;
 key.shadow.camera.left=-120; key.shadow.camera.right=120; key.shadow.camera.top=120; key.shadow.camera.bottom=-120;
+key.shadow.bias = -0.0004;
 scene.add(key);
-const fill = new THREE.DirectionalLight(0xbcd2ff, 0.5); fill.position.set(-80, 40, -40); scene.add(fill);
-const rim = new THREE.DirectionalLight(0xffffff, 0.7); rim.position.set(0, 50, -90); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xcfe0ff, 1.4); fill.position.set(-90, 55, -30); scene.add(fill);
+const rim  = new THREE.DirectionalLight(0xffffff, 1.6); rim.position.set(0, 60, -100); scene.add(rim);
+const front = new THREE.DirectionalLight(0xffffff, 1.0); front.position.set(0, 30, 120); scene.add(front);
 
 // ---------- renderer / camera ----------
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.5;
 document.getElementById('app').appendChild(renderer.domElement);
 
 const camera = new THREE.PerspectiveCamera(40, innerWidth/innerHeight, 1, 2000);
