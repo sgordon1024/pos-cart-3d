@@ -127,7 +127,8 @@
   </div>
   <div class="row">
     <button id="t-spin">Auto-spin</button>
-    <button id="dl-3d">⬇ Download 3D (.glb)</button>
+    <button id="dl-3d">⬇ GLB</button>
+    <button id="dl-dxf">⬇ DXF</button>
   </div>
   <div class="legend" id="m-legend"></div>
 </div>
@@ -345,6 +346,41 @@ document.getElementById('dl-3d').onclick=()=>{
     a.click(); URL.revokeObjectURL(a.href);
   }, (e)=>console.error('GLB export failed', e), { binary:true });
 };
+
+// export current model to DXF (3DFACE mesh, Z-up, inches) for AutoCAD/fabrication
+function exportDXF(){
+  if(!currentModel) return;
+  currentModel.updateWorldMatrix(true, true);
+  const v = new THREE.Vector3();
+  const F = (n)=> (Math.abs(n) < 1e-9 ? 0 : n).toFixed(4);
+  // three.js is Y-up; AutoCAD WCS is Z-up. map (x,y,z) -> (x,-z,y), right-handed, upright.
+  const tri = [];
+  currentModel.traverse(o=>{
+    if(!o.isMesh || !o.geometry || !o.geometry.attributes.position) return;
+    const pos = o.geometry.attributes.position, idx = o.geometry.index, m = o.matrixWorld;
+    const P = (i)=>{ v.set(pos.getX(i),pos.getY(i),pos.getZ(i)).applyMatrix4(m); return [F(v.x), F(-v.z), F(v.y)]; };
+    const n = idx ? idx.count : pos.count;
+    for(let i=0;i<n;i+=3){
+      const a = idx?idx.getX(i):i, b = idx?idx.getX(i+1):i+1, c = idx?idx.getX(i+2):i+2;
+      tri.push([P(a), P(b), P(c)]);
+    }
+  });
+  let s = '0\nSECTION\n2\nHEADER\n9\n$INSUNITS\n70\n1\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n';
+  for(const t of tri){
+    const [a,b,c] = t;
+    s += '0\n3DFACE\n8\nMODEL\n';
+    s += '10\n'+a[0]+'\n20\n'+a[1]+'\n30\n'+a[2]+'\n';
+    s += '11\n'+b[0]+'\n21\n'+b[1]+'\n31\n'+b[2]+'\n';
+    s += '12\n'+c[0]+'\n22\n'+c[1]+'\n32\n'+c[2]+'\n';
+    s += '13\n'+c[0]+'\n23\n'+c[1]+'\n33\n'+c[2]+'\n'; // 4th pt = 3rd → triangular face
+  }
+  s += '0\nENDSEC\n0\nEOF\n';
+  const blob = new Blob([s], {type:'application/dxf'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = (activeId||'model') + '.dxf';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+document.getElementById('dl-dxf').onclick = exportDXF;
 
 // ===================== drawer / hamburger =====================
 const drawer=document.getElementById('drawer'), scrim=document.getElementById('scrim');
