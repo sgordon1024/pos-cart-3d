@@ -243,7 +243,7 @@ function buildPosCart(){
   const shelf=box(W-6,0.8,D-6,M.shelf); shelf.position.y=CASTER_H+TOEKICK_H+bodyH*0.45; cart.add(shelf);
   // POS terminals
   function term(x){ const g=new THREE.Group();
-    g.add(Object.assign(box(8,1.2,7,M.steel),{position:new THREE.Vector3(0,0.6,0)}));
+    const base=box(8,1.2,7,M.steel); base.position.set(0,0.6,0); g.add(base);
     const stem=box(1.4,7,1.4,M.steel); stem.position.set(0,4.5,-1.5); g.add(stem);
     const bezel=box(11.6,8.6,0.6,new THREE.MeshStandardMaterial({color:0x111317,roughness:0.4,metalness:0.4})); bezel.position.set(0,9.5,-1.55); bezel.rotation.x=-0.18; g.add(bezel);
     const screen=box(11,8,1,M.screen); screen.position.set(0,9.5,-1.2); screen.rotation.x=-0.18; g.add(screen);
