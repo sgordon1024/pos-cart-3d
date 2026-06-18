@@ -127,7 +127,7 @@
   </div>
   <div class="row">
     <button id="t-spin">Auto-spin</button>
-    <a id="dl-wrap" href="#" download style="display:none"><button>⬇ Download DWG</button></a>
+    <button id="dl-3d">⬇ Download 3D (.glb)</button>
   </div>
   <div class="legend" id="m-legend"></div>
 </div>
@@ -153,6 +153,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
 // ===================== shared scene =====================
 const scene = new THREE.Scene();
@@ -263,7 +264,6 @@ const MODELS = [
     build: buildPosCart,
     dims: 'Footprint 54" × 30" · Counter 34"',
     legend: '1) 3" casters · 2) steel-tube toekick · 3) Alucobond wrap · 4) Densetec countertop · 5) undercounter shelf · 6) outlet grommets ×2 · POS terminals ×2',
-    dwg: '4ft-6in-POS-Cart.dwg',
   },
   // Add more here as files arrive, e.g.:
   // { id:'bar-22', name:'22\' Bar', desc:'GLB import', type:'glb', url:'models/bar-22.glb', dwg:'bar-22.dwg' },
@@ -287,8 +287,6 @@ function applyMeta(entry){
   document.getElementById('m-sub').textContent = entry.desc || 'IKONIQ · 3D viewer';
   document.getElementById('m-dim').textContent = entry.dims || '';
   document.getElementById('m-legend').textContent = entry.legend || '';
-  const dl = document.getElementById('dl-wrap');
-  if (entry.dwg){ dl.href = entry.dwg; dl.style.display=''; } else { dl.style.display='none'; }
 }
 function frameModel(){
   const bb = new THREE.Box3().setFromObject(currentModel);
@@ -334,6 +332,19 @@ document.getElementById('b-top').onclick  =()=>setView('top');
 
 let spin=false;
 document.getElementById('t-spin').onclick=(e)=>{ spin=!spin; e.target.classList.toggle('active',spin); };
+
+// export current model to a real 3D file (.glb)
+const exporter = new GLTFExporter();
+document.getElementById('dl-3d').onclick=()=>{
+  if(!currentModel) return;
+  exporter.parse(currentModel, (result)=>{
+    const blob = new Blob([result], {type:'model/gltf-binary'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (activeId || 'model') + '.glb';
+    a.click(); URL.revokeObjectURL(a.href);
+  }, (e)=>console.error('GLB export failed', e), { binary:true });
+};
 
 // ===================== drawer / hamburger =====================
 const drawer=document.getElementById('drawer'), scrim=document.getElementById('scrim');
