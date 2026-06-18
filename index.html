@@ -74,7 +74,8 @@ const CASTER_H = 3;
 const TOEKICK_H = 4;
 const TOP_THK = 2;          // countertop slab
 const BODY_H = COUNTER_H - CASTER_H - TOP_THK; // wrapped body incl. toekick zone
-const TOEKICK_INSET = 2.5;
+const BASE_OH = 1.75;       // base/toekick sticks out past body: front + sides
+const COUNTER_OH = 2;       // countertop overhang: front + sides
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1c2230);
@@ -107,9 +108,12 @@ const casterX = W/2 - 4, casterZ = D/2 - 4;
   cart.add(g);
 });
 
-// ---------- toekick (recessed steel-tube base, black) ----------
-const toekick = box(W - TOEKICK_INSET*2, TOEKICK_H, D - TOEKICK_INSET*2, matToekick);
-toekick.position.y = CASTER_H + TOEKICK_H/2;
+// ---------- toekick / base rail (sticks OUT past body: front + both sides, flush at back) ----------
+// front = +Z (graphic side), back = -Z (door side). Extra depth goes to front only.
+const tkW = W + BASE_OH*2;
+const tkD = D + BASE_OH;
+const toekick = box(tkW, TOEKICK_H, tkD, matToekick);
+toekick.position.set(0, CASTER_H + TOEKICK_H/2, BASE_OH/2); // back face stays flush with body back
 cart.add(toekick);
 
 // ---------- main wrapped body (Alucobond) ----------
@@ -137,9 +141,9 @@ const doorY = CASTER_H + TOEKICK_H + bodyH*0.46;
 });
 cart.add(doorGroup);
 
-// ---------- countertop (Densetec slab, slight overhang) ----------
-const top = box(W + 1.5, TOP_THK, D + 1.5, matCounter);
-top.position.y = CASTER_H + BODY_H + TOP_THK/2;
+// ---------- countertop (Densetec slab, overhangs front + sides, flush at back) ----------
+const top = box(W + COUNTER_OH*2, TOP_THK, D + COUNTER_OH, matCounter);
+top.position.set(0, CASTER_H + BODY_H + TOP_THK/2, COUNTER_OH/2);
 cart.add(top);
 const COUNTER_TOP_Y = CASTER_H + BODY_H + TOP_THK;
 
