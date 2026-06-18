@@ -29,9 +29,51 @@
   button.active { background:#2d6cdf; border-color:#2d6cdf; }
   #hint { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index:10;
     font-size: 12px; color:#6b7686; background: rgba(18,22,30,.7); padding:6px 12px; border-radius: 20px; }
+  #gate { position: fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:#0c0f14; }
+  #gate.hidden { display:none; }
+  #gate .card { background: rgba(18,22,30,.96); border:1px solid rgba(255,255,255,.1); border-radius:14px;
+    padding:28px 26px; width:300px; text-align:center; box-shadow:0 12px 50px rgba(0,0,0,.6); }
+  #gate h2 { margin:0 0 6px; font-size:16px; }
+  #gate p { margin:0 0 16px; font-size:12px; color:#8b98a8; }
+  #gate input { width:100%; box-sizing:border-box; padding:10px 12px; border-radius:8px;
+    border:1px solid rgba(255,255,255,.15); background:#11151c; color:#e6edf3; font:inherit; }
+  #gate button { margin-top:12px; width:100%; padding:10px; background:#2d6cdf; border:none;
+    border-radius:8px; color:#fff; font:inherit; cursor:pointer; }
+  #gate .err { color:#ff6b6b; font-size:12px; min-height:16px; margin-top:8px; }
 </style>
 </head>
 <body>
+<div id="gate">
+  <div class="card">
+    <h2>4'-6" POS Cart</h2>
+    <p>Enter password to view</p>
+    <input id="gate-pw" type="password" placeholder="Password" autocomplete="current-password" />
+    <div class="err" id="gate-err"></div>
+    <button id="gate-go">Unlock</button>
+  </div>
+</div>
+<script>
+(function(){
+  var PW = "97prelude";
+  var KEY = "poscart_auth_until";
+  var now = Date.now();
+  var until = parseInt(localStorage.getItem(KEY) || "0", 10);
+  var gate = document.getElementById('gate');
+  function unlock(){ gate.classList.add('hidden'); }
+  if (until && now < until) { unlock(); return; }          // already unlocked today
+  var input = document.getElementById('gate-pw');
+  var err = document.getElementById('gate-err');
+  function tryPw(){
+    if (input.value === PW){
+      localStorage.setItem(KEY, String(now + 24*60*60*1000)); // remember for 24h
+      unlock();
+    } else { err.textContent = "Incorrect password"; input.select(); }
+  }
+  document.getElementById('gate-go').onclick = tryPw;
+  input.addEventListener('keydown', function(e){ if(e.key === 'Enter') tryPw(); });
+  input.focus();
+})();
+</script>
 <div id="app"></div>
 <div id="hud">
   <h1>4'-6" P.O.S Cart</h1>
