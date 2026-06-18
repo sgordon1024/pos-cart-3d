@@ -129,6 +129,7 @@
     <button id="t-spin">Auto-spin</button>
     <button id="dl-3d">⬇ GLB</button>
     <button id="dl-dxf">⬇ DXF</button>
+    <a id="dl-step-wrap" href="#" download style="display:none"><button>⬇ STEP</button></a>
   </div>
   <div class="legend" id="m-legend"></div>
 </div>
@@ -265,6 +266,7 @@ const MODELS = [
     build: buildPosCart,
     dims: 'Footprint 54" × 30" · Counter 34"',
     legend: '1) 3" casters · 2) steel-tube toekick · 3) Alucobond wrap · 4) Densetec countertop · 5) undercounter shelf · 6) outlet grommets ×2 · POS terminals ×2',
+    step: 'pos-cart-4-6.step',
   },
   // Add more here as files arrive, e.g.:
   // { id:'bar-22', name:'22\' Bar', desc:'GLB import', type:'glb', url:'models/bar-22.glb', dwg:'bar-22.dwg' },
@@ -288,6 +290,8 @@ function applyMeta(entry){
   document.getElementById('m-sub').textContent = entry.desc || 'IKONIQ · 3D viewer';
   document.getElementById('m-dim').textContent = entry.dims || '';
   document.getElementById('m-legend').textContent = entry.legend || '';
+  const st = document.getElementById('dl-step-wrap');
+  if (entry.step){ st.href = entry.step; st.style.display=''; } else { st.style.display='none'; }
 }
 function frameModel(){
   const bb = new THREE.Box3().setFromObject(currentModel);
