@@ -205,7 +205,7 @@ const M = {
   glass:     new THREE.MeshStandardMaterial({ color: 0xbcd4e0, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.0 }),
   blackpost: new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.4,  metalness: 0.6  }),
   header:    new THREE.MeshStandardMaterial({ color: 0x4a4d52, roughness: 0.5,  metalness: 0.45 }),
-  monitor:   new THREE.MeshStandardMaterial({ color: 0x9a9ea3, roughness: 0.3,  metalness: 0.2  }),
+  monitor:   new THREE.MeshStandardMaterial({ color: 0xb8bcc2, roughness: 0.28, metalness: 0.2, emissive: 0x232a33, emissiveIntensity: 0.35 }),
   white:     new THREE.MeshStandardMaterial({ color: 0xeceef0, roughness: 0.5,  metalness: 0.1  }),
   posScreen: new THREE.MeshStandardMaterial({ color: 0x10141a, roughness: 0.2,  metalness: 0.1, emissive: 0x0a1422, emissiveIntensity: 0.5 }),
   stainlessLite: new THREE.MeshStandardMaterial({ color: 0xc6cace, roughness: 0.3, metalness: 0.55 }),
@@ -316,16 +316,18 @@ function buildKiosk18110(){
   const g2A=new THREE.Group(); g2A.name='2A';
   g2A.add(section(SECT_W/2));  g2A.add(posStation(SECT_W+9));
 
-  // overhead canopy (shared signage): posts + header + twin monitors
+  // overhead canopy (shared signage): centered posts + header + twin monitors facing FRONT (+Z = customer)
   const shared=new THREE.Group(); shared.name='shared';
   const postH=50;
-  [-10, 44].forEach(px=>{
-    const post=box(2.5, postH, 2.5, M.blackpost); post.position.set(px, COUNTER_H+postH/2, -9); shared.add(post);
+  const monY=COUNTER_H+postH-15;          // monitor vertical center
+  [-30, 30].forEach(px=>{                 // symmetric posts rising from the back
+    const post=box(2.5, postH, 2.5, M.blackpost); post.position.set(px, COUNTER_H+postH/2, -10); shared.add(post);
   });
-  const head=box(104, 12, 13, M.header); head.position.set(12, COUNTER_H+postH-2, -7); shared.add(head);
-  [-19, 31].forEach(mx=>{
-    const mon=box(44, 27, 1.6, M.monitor); mon.position.set(mx, COUNTER_H+postH-15, 1); mon.rotation.x=0.08; shared.add(mon);
-    const bez=box(45, 28, 0.8, M.blackpost); bez.position.set(mx, COUNTER_H+postH-15, 0.2); bez.rotation.x=0.08; shared.add(bez);
+  const head=box(108, 12, 13, M.header); head.position.set(0, COUNTER_H+postH-2, -7); shared.add(head);
+  [-24, 24].forEach(mx=>{
+    // black frame BEHIND (-Z), light screen in FRONT (+Z) so the display faces the customer
+    const bez=box(45, 28, 1.0, M.blackpost); bez.position.set(mx, monY, -1.6); bez.rotation.x=0.05; shared.add(bez);
+    const mon=box(42, 25, 0.6, M.monitor);  mon.position.set(mx, monY, -1.0); mon.rotation.x=0.05; shared.add(mon);
   });
 
   root.add(g1A, g2A, shared);
