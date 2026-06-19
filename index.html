@@ -125,6 +125,7 @@
     <button id="b-iso">Iso</button>
     <button id="b-top">Top</button>
   </div>
+  <div class="row" id="isolate-row" style="display:none"></div>
   <div class="row">
     <button id="t-spin">Auto-spin</button>
     <button id="dl-3d">⬇ GLB</button>
@@ -200,6 +201,15 @@ const M = {
   shelf:   new THREE.MeshStandardMaterial({ color: 0x2c3036, roughness: 0.55, metalness: 0.2  }),
   grommet: new THREE.MeshStandardMaterial({ color: 0x5a5e66, roughness: 0.4,  metalness: 0.7  }),
   accent:  new THREE.MeshStandardMaterial({ color: 0x232730, roughness: 0.4,  metalness: 0.25 }),
+  wood:      new THREE.MeshStandardMaterial({ color: 0x5a4632, roughness: 0.62, metalness: 0.05 }),
+  glass:     new THREE.MeshStandardMaterial({ color: 0xbcd4e0, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.0 }),
+  blackpost: new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.4,  metalness: 0.6  }),
+  header:    new THREE.MeshStandardMaterial({ color: 0x4a4d52, roughness: 0.5,  metalness: 0.45 }),
+  monitor:   new THREE.MeshStandardMaterial({ color: 0x9a9ea3, roughness: 0.3,  metalness: 0.2  }),
+  white:     new THREE.MeshStandardMaterial({ color: 0xeceef0, roughness: 0.5,  metalness: 0.1  }),
+  posScreen: new THREE.MeshStandardMaterial({ color: 0x10141a, roughness: 0.2,  metalness: 0.1, emissive: 0x0a1422, emissiveIntensity: 0.5 }),
+  stainlessLite: new THREE.MeshStandardMaterial({ color: 0xc6cace, roughness: 0.3, metalness: 0.55 }),
+  wellInner: new THREE.MeshStandardMaterial({ color: 0x6e747b, roughness: 0.45, metalness: 0.5 }),
 };
 function box(w,h,d,mat){ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.castShadow=true; m.receiveShadow=true; return m; }
 
@@ -255,6 +265,73 @@ function buildPosCart(){
   return cart;
 }
 
+// ===================== model: 18110 Kiosk (parametric, 2 sections) =====================
+function buildKiosk18110(){
+  const root = new THREE.Group();
+  const SECT_W = 66, D = 30, COUNTER_H = 36;
+  const CASTER_H = 2.5, BASE_H = 3.5, TOP_THK = 1.5;
+  const woodH = COUNTER_H - CASTER_H - BASE_H - TOP_THK;   // 28.5
+  const baseY = CASTER_H + BASE_H/2;
+  const bodyY = CASTER_H + BASE_H + woodH/2;
+  const counterY = COUNTER_H - TOP_THK/2;
+  const TOP = COUNTER_H;
+
+  // one cabinet module centered at xc
+  function section(xc){
+    const g = new THREE.Group();
+    const cg = new THREE.CylinderGeometry(1.2,1.2,CASTER_H,16);
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{
+      const c=new THREE.Mesh(cg,M.caster); c.castShadow=true;
+      c.position.set(xc+sx*(SECT_W/2-5), CASTER_H/2, sz*(D/2-4)); g.add(c);
+    });
+    const base=box(SECT_W, BASE_H, D, M.toekick); base.position.set(xc,baseY,0); g.add(base);
+    const body=box(SECT_W-0.5, woodH, D, M.wood); body.position.set(xc,bodyY,0); g.add(body);
+    const top=box(SECT_W+0.5, TOP_THK, D+1, M.stainlessLite); top.position.set(xc,counterY,0.5); g.add(top);
+    // food well insert
+    const well=box(30,1.2,18,M.steel); well.position.set(xc, TOP+0.4, 3); g.add(well);
+    const wellIn=box(27,1.1,15,M.wellInner); wellIn.position.set(xc, TOP+0.5, 3); g.add(wellIn);
+    // glass sneeze-guard panel + posts (toward back)
+    const glassH=14, zg=-4;
+    const panel=box(SECT_W-7, glassH, 0.4, M.glass); panel.castShadow=false;
+    panel.position.set(xc, TOP+glassH/2, zg); g.add(panel);
+    const pg=new THREE.CylinderGeometry(0.4,0.4,glassH+2,12);
+    [-1,0,1].forEach(k=>{ const p=new THREE.Mesh(pg,M.steel); p.position.set(xc+k*(SECT_W/2-4), TOP+glassH/2, zg); g.add(p); });
+    return g;
+  }
+
+  // cantilevered side shelf + POS terminal
+  function posStation(xc){
+    const g=new THREE.Group();
+    const shelfY=33;
+    const shelf=box(18,1.2,16,M.white); shelf.position.set(xc, shelfY, 5); g.add(shelf);
+    const pbase=box(7,1,6,M.white); pbase.position.set(xc, shelfY+1.1, 5); g.add(pbase);
+    const stem=box(1.2,5,1.2,M.white); stem.position.set(xc, shelfY+3.5, 3); g.add(stem);
+    const scr=box(9,7,0.8,M.posScreen); scr.position.set(xc, shelfY+7, 3); scr.rotation.x=-0.12; g.add(scr);
+    return g;
+  }
+
+  // sections 1A (left) and 2A (right)
+  const g1A=new THREE.Group(); g1A.name='1A';
+  g1A.add(section(-SECT_W/2)); g1A.add(posStation(-SECT_W-9));
+  const g2A=new THREE.Group(); g2A.name='2A';
+  g2A.add(section(SECT_W/2));  g2A.add(posStation(SECT_W+9));
+
+  // overhead canopy (shared signage): posts + header + twin monitors
+  const shared=new THREE.Group(); shared.name='shared';
+  const postH=50;
+  [-10, 44].forEach(px=>{
+    const post=box(2.5, postH, 2.5, M.blackpost); post.position.set(px, COUNTER_H+postH/2, -9); shared.add(post);
+  });
+  const head=box(104, 12, 13, M.header); head.position.set(12, COUNTER_H+postH-2, -7); shared.add(head);
+  [-19, 31].forEach(mx=>{
+    const mon=box(44, 27, 1.6, M.monitor); mon.position.set(mx, COUNTER_H+postH-15, 1); mon.rotation.x=0.08; shared.add(mon);
+    const bez=box(45, 28, 0.8, M.blackpost); bez.position.set(mx, COUNTER_H+postH-15, 0.2); bez.rotation.x=0.08; shared.add(bez);
+  });
+
+  root.add(g1A, g2A, shared);
+  return root;
+}
+
 // ===================== model registry =====================
 // type 'builder' → build():Group   |   type 'glb' → url to a .glb/.gltf
 const MODELS = [
@@ -268,8 +345,16 @@ const MODELS = [
     legend: '1) 3" casters · 2) steel-tube toekick · 3) Alucobond wrap · 4) Densetec countertop · 5) undercounter shelf · 6) outlet grommets ×2 · POS terminals ×2',
     step: 'pos-cart-4-6.step',
   },
-  // Add more here as files arrive, e.g.:
-  // { id:'bar-22', name:'22\' Bar', desc:'GLB import', type:'glb', url:'models/bar-22.glb', dwg:'bar-22.dwg' },
+  {
+    id: 'kiosk-18110',
+    name: '18110 Kiosk (1A + 2A)',
+    desc: 'Two-section food kiosk · parametric',
+    type: 'builder',
+    build: buildKiosk18110,
+    dims: 'Two 66" sections · Counter 36" · canopy w/ twin displays',
+    legend: 'Walnut-wrap body · black caster base · stainless counter + food wells · glass sneeze-guards · overhead canopy w/ 2 monitors · end POS shelves. Use the isolate toggle to view section 1A or 2A.',
+    parts: ['1A', '2A'],
+  },
 ];
 
 // ===================== model loading / framing =====================
@@ -307,14 +392,34 @@ function showModel(entry){
   const loading = document.getElementById('loading');
   applyMeta(entry); setActive(entry.id);
   if (entry.type === 'builder'){
-    currentModel = entry.build(); scene.add(currentModel); frameModel();
+    currentModel = entry.build(); scene.add(currentModel); frameModel(); renderIsolate(entry);
   } else if (entry.type === 'glb'){
     loading.classList.add('show');
     gltf.load(entry.url, g=>{
       currentModel = g.scene; currentModel.traverse(o=>{ if(o.isMesh){o.castShadow=true;o.receiveShadow=true;} });
-      scene.add(currentModel); frameModel(); loading.classList.remove('show');
+      scene.add(currentModel); frameModel(); renderIsolate(entry); loading.classList.remove('show');
     }, undefined, err=>{ loading.innerHTML='<span style="color:#ff6b6b">Failed to load model</span>'; console.error(err); });
   }
+}
+
+// isolate toggle — show one named sub-group at a time ('shared' groups always visible)
+function setIsolate(key){
+  if(!currentModel) return;
+  currentModel.children.forEach(c=>{
+    if(!c.name || c.name==='shared') return;
+    c.visible = (key==='full' || c.name===key);
+  });
+  document.querySelectorAll('#isolate-row button').forEach(b=>b.classList.toggle('active', b.dataset.iso===key));
+}
+function renderIsolate(entry){
+  const row=document.getElementById('isolate-row');
+  row.innerHTML='';
+  if(!entry.parts){ row.style.display='none'; return; }
+  row.style.display='';
+  const mk=(key,label)=>{ const b=document.createElement('button'); b.textContent=label; b.dataset.iso=key; b.onclick=()=>setIsolate(key); row.appendChild(b); };
+  mk('full','Full');
+  entry.parts.forEach(p=>mk(p, 'Isolate '+p));
+  setIsolate('full');
 }
 
 // ===================== views =====================
